@@ -1,19 +1,19 @@
 {
   "name": "Calculadora Valor de la Edificación",
   "short_name": "Edificación",
-  "start_url": "/PERU.-Valor-de-la-edificaci-n/",
-  "scope": "/PERU.-Valor-de-la-edificaci-n/",
+  "start_url": "/PERU.VALOR_EDIFICACION/",
+  "scope": "/PERU.VALOR_EDIFICACION/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "/PERU.-Valor-de-la-edificaci-n/icons/icon-192.jpg",
+      "src": "/PERU.VALOR_EDIFICACION/icons/icon-192.jpg",
       "sizes": "192x192",
       "type": "image/jpeg"
     },
     {
-      "src": "/PERU.-Valor-de-la-edificaci-n/icons/icon-512.jpg",
+      "src": "/PERU.VALOR_EDIFICACION/icons/icon-512.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }
