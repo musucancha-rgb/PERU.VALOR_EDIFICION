@@ -74,7 +74,7 @@
   <div id="uiContainer" class="absolute inset-0 z-[1000] pointer-events-none flex flex-col justify-end md:justify-start items-center md:items-stretch transition-all duration-300 md:p-4 md:w-[500px]">
     
     <!-- PANEL PRINCIPAL (BOTTOM SHEET EN MÓVIL / SIDEBAR EN DESKTOP) -->
-    <div id="mainPanel" class="panel-visible pointer-events-auto bg-white/95 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-2xl rounded-t-3xl md:rounded-2xl flex flex-col w-full h-[85vh] md:h-[96%] border-t border-white/20 overflow-hidden transition-all duration-500 ease-in-out">
+    <div id="mainPanel" class="panel-visible pointer-events-auto bg-white/95 backdrop-blur-md shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:shadow-2xl rounded-t-3xl md:rounded-2xl flex flex-col w-full h-[90vh] md:h-[98%] border-t border-white/20 overflow-hidden transition-all duration-500 ease-in-out">
       
       <!-- BARRA DE ARRASTRE (VISUAL MÓVIL) -->
       <div class="md:hidden w-full flex justify-center pt-3 pb-1" onclick="togglePanel()">
@@ -122,7 +122,7 @@
       </div>
 
       <!-- BODY SCROLLABLE -->
-      <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-6 pb-20">
+      <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-6 pb-32 md:pb-24">
 
         <!-- 1. DATOS GENERALES -->
         <section class="space-y-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
@@ -213,41 +213,49 @@
             <span id="subtotalObras">S/. 0.00</span>
         </div>
         <div class="border-t border-slate-600 my-2"></div>
-        <div class="flex justify-between items-end">
+        <div class="flex justify-between items-end mb-4">
             <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-400">Valor Total</p>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400">Valor Edificación</p>
                 <p id="totalFinal" class="text-2xl font-bold leading-none text-green-400">S/. 0.00</p>
             </div>
+        </div>
+
+        <!-- SECCIÓN VALOR DEL PREDIO (NUEVA) -->
+        <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600 mb-4">
+            <h4 class="text-sm font-bold text-orange-400 mb-1">¿Quieres obtener el Valor del predio?</h4>
+            <p class="text-[10px] text-slate-300 font-mono mb-2">VPredio = VTerreno + VEdificación</p>
             
-            <!-- SECCIÓN CONTACTO (Reemplaza al botón PDF) -->
-            <div class="flex flex-col items-end">
-                <span class="text-sm font-bold text-orange-400">¿Quieres más info?</span>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-[10px] text-slate-400">Escríbenos en:</span>
-                    <div class="flex gap-2">
-                        <!-- YouTube (Rojo) -->
-                        <a href="https://youtube.com/@laburbanrisk" target="_blank" class="text-red-500 hover:text-red-400 transition-colors transform hover:scale-110">
-                            <i class="fa-brands fa-youtube fa-lg"></i>
-                        </a>
-                        <!-- Facebook (Azul) -->
-                        <a href="https://www.facebook.com/share/1Db3ZgmTE4/?mibextid=wwXIfr" target="_blank" class="text-blue-500 hover:text-blue-400 transition-colors transform hover:scale-110">
-                            <i class="fa-brands fa-facebook fa-lg"></i>
-                        </a>
-                        <!-- Instagram (Rosa) -->
-                        <a href="https://www.instagram.com/laburbanrisk?igsh=MWNzam53enpzZng4Ng%3D%3D&utm_source=qr" target="_blank" class="text-pink-500 hover:text-pink-400 transition-colors transform hover:scale-110">
-                            <i class="fa-brands fa-instagram fa-lg"></i>
-                        </a>
-                        <!-- TikTok (Blanco) -->
-                        <a href="https://www.tiktok.com/@laburbanrisk?_r=1&_t=ZN-92idJVeblZe" target="_blank" class="text-white hover:text-gray-300 transition-colors transform hover:scale-110">
-                            <i class="fa-brands fa-tiktok fa-lg"></i>
-                        </a>
-                    </div>
+            <p class="text-[10px] text-slate-300 leading-tight mb-2">
+                Consulta el valor arancelario del terreno aquí:
+                <a href="https://musucancha-rgb.github.io/mapa-mef-2026/" target="_blank" class="text-blue-300 hover:text-white underline flex items-center gap-1 mt-1">
+                    <i class="fa-solid fa-map-location-dot"></i> Valor Arancelario 2026
+                </a>
+            </p>
+
+            <div class="flex flex-col gap-2 mt-3 border-t border-slate-600 pt-2">
+                <label class="text-[10px] text-slate-400 uppercase tracking-wider">Si ya tienes el Valor del Terreno (S/.):</label>
+                <div class="flex gap-2">
+                    <input type="number" id="valorTerrenoInput" placeholder="Ej. 50000" class="flex-1 p-2 rounded text-slate-800 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500" oninput="calculatePredio()">
+                </div>
+                <div class="flex justify-between items-center mt-1 bg-orange-500/20 p-2 rounded border border-orange-500/50">
+                    <span class="text-xs font-bold text-orange-200">VALOR TOTAL PREDIO:</span>
+                    <span id="valorPredioTotal" class="text-lg font-bold text-white">S/. 0.00</span>
+                </div>
+            </div>
+            
+            <div class="mt-3 text-center">
+                <p class="text-[10px] text-slate-400">¿Dudas? Contáctanos:</p>
+                <div class="flex justify-center gap-4 mt-2 text-sm">
+                    <a href="https://youtube.com/@laburbanrisk" target="_blank" class="text-red-500 hover:text-red-400"><i class="fa-brands fa-youtube fa-lg"></i></a>
+                    <a href="https://www.facebook.com/share/1Db3ZgmTE4/?mibextid=wwXIfr" target="_blank" class="text-blue-500 hover:text-blue-400"><i class="fa-brands fa-facebook fa-lg"></i></a>
+                    <a href="https://www.instagram.com/laburbanrisk?igsh=MWNzam53enpzZng4Ng%3D%3D&utm_source=qr" target="_blank" class="text-pink-500 hover:text-pink-400"><i class="fa-brands fa-instagram fa-lg"></i></a>
+                    <a href="https://www.tiktok.com/@laburbanrisk?_r=1&_t=ZN-92idJVeblZe" target="_blank" class="text-white hover:text-gray-300"><i class="fa-brands fa-tiktok fa-lg"></i></a>
                 </div>
             </div>
         </div>
         
         <!-- Créditos pequeños -->
-        <div class="mt-3 pt-2 border-t border-slate-700 flex justify-between items-center">
+        <div class="text-center pt-1 border-t border-slate-700/50">
             <span class="text-[9px] text-slate-500 font-bold">Elaborado por Lab Urban Risk</span>
         </div>
       </div>
@@ -270,8 +278,8 @@
             estado: document.getElementById('estadoSelect').value,
             antiguedad: document.getElementById('antiguedadInput').value,
             area: document.getElementById('areaInput').value,
+            valorTerreno: document.getElementById('valorTerrenoInput').value, // Guardar también el terreno
             obras: currentObras
-            // Nota: No guardamos categorías específicas para simplificar, se resetearán al cambiar región
         };
         localStorage.setItem('calcState', JSON.stringify(state));
     }
@@ -286,8 +294,8 @@
                 document.getElementById('estadoSelect').value = state.estado || 'muy_bueno';
                 document.getElementById('antiguedadInput').value = state.antiguedad || 0;
                 document.getElementById('areaInput').value = state.area || 100;
+                document.getElementById('valorTerrenoInput').value = state.valorTerreno || ''; // Cargar terreno
                 currentObras = state.obras || [];
-                // La UI se actualizará en el init()
                 return true;
             } catch (e) { console.error("Error loading state", e); }
         }
@@ -679,16 +687,35 @@
         // 3. Valor Edificación
         const area = parseFloat(document.getElementById('areaInput').value) || 0;
         const valEdificacion = totalUnitario * area * factorDepreciacion;
-        document.getElementById('subtotalEdif').innerText = "S/. " + valEdificacion.toLocaleString('es-PE', {minimumFractionDigits: 2});
+        //document.getElementById('subtotalEdif').innerText = "S/. " + valEdificacion.toLocaleString('es-PE', {minimumFractionDigits: 2});
 
         // 4. Obras Complementarias
         let valObras = 0;
         currentObras.forEach(o => valObras += o.total);
-        document.getElementById('subtotalObras').innerText = "S/. " + valObras.toLocaleString('es-PE', {minimumFractionDigits: 2});
+        //document.getElementById('subtotalObras').innerText = "S/. " + valObras.toLocaleString('es-PE', {minimumFractionDigits: 2});
 
-        // 5. Total
-        const total = valEdificacion + valObras;
-        document.getElementById('totalFinal').innerText = "S/. " + total.toLocaleString('es-PE', {minimumFractionDigits: 2});
+        // 5. Total Edificación
+        const totalEdificacion = valEdificacion + valObras;
+        document.getElementById('totalFinal').innerText = "S/. " + totalEdificacion.toLocaleString('es-PE', {minimumFractionDigits: 2});
+        
+        // 6. Recalcular Predio si hay valor de terreno
+        calculatePredio(totalEdificacion);
+
+        saveState();
+    }
+
+    function calculatePredio(totalEdif) {
+        // Si no se pasa el total, obtenerlo del DOM (parseando el string formateado)
+        let valEdificacion = totalEdif;
+        if (typeof valEdificacion === 'undefined') {
+             const text = document.getElementById('totalFinal').innerText.replace('S/. ', '').replace(/,/g, '');
+             valEdificacion = parseFloat(text) || 0;
+        }
+
+        const valTerreno = parseFloat(document.getElementById('valorTerrenoInput').value) || 0;
+        const valPredio = valEdificacion + valTerreno;
+        
+        document.getElementById('valorPredioTotal').innerText = "S/. " + valPredio.toLocaleString('es-PE', {minimumFractionDigits: 2});
         
         saveState();
     }
@@ -758,6 +785,7 @@
             document.getElementById('areaInput').value = 100;
             document.getElementById('materialSelect').selectedIndex = 0;
             document.getElementById('estadoSelect').selectedIndex = 0;
+            document.getElementById('valorTerrenoInput').value = ''; // Reset terreno
             currentObras = [];
             renderObrasList();
             updateRegion();
