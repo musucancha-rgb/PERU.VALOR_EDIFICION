@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Calculadora de Edificaciones Perú 2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    
+    #map { z-index: 0; height: 100vh; width: 100vw; }
+    
+    /* Panel animado */
+    .panel-hidden { opacity: 0; transform: translateX(-100%); pointer-events: none; }
+    .panel-visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
+
+    @media (max-width: 768px) {
+        .panel-hidden { opacity: 0; transform: scale(0.95); pointer-events: none;}
+    }
+
+    /* Estilos de impresión para reporte */
+    @media print {
+        #map, #toggleSideBtn { display: none; }
+        #uiContainer { position: relative; width: 100%; height: auto; overflow: visible; }
+        #mainPanel { max-height: none; box-shadow: none; border: none; width: 100%; max-width: 100%; }
+        .no-print { display: none !important; }
+    }
+    
+    /* Input numérico limpio */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  </style>
+</head>
+
+<body class="bg-gray-100 overflow-hidden relative">
+
+  <!-- BOTÓN DE CONTROL LATERAL -->
+  <button id="toggleSideBtn" class="absolute left-0 top-1/2 transform -translate-y-1/2 z-[2000] bg-white text-blue-700 w-8 h-20 rounded-r-xl shadow-xl border-y border-r border-gray-300 flex items-center justify-center hover:bg-blue-50 transition-all duration-300 focus:outline-none group">
+    <i id="toggleIcon" class="fa-solid fa-chevron-left text-lg transition-transform duration-300"></i>
+  </button>
+
+  <!-- CONTENEDOR UI -->
+  <div id="uiContainer" class="absolute top-0 left-0 h-full w-full md:w-[550px] z-[1000] pointer-events-none flex flex-col p-2 md:p-4 justify-center items-center md:justify-start md:items-stretch transition-all duration-300 pl-10 md:pl-4">
+    
+    <!-- PANEL PRINCIPAL (CALCULADORA) -->
+    <div id="mainPanel" class="panel-visible pointer-events-auto bg-white/95 backdrop-blur-md shadow-2xl rounded-2xl flex flex-col w-full h-[95vh] md:h-[96%] border border-white/20 overflow-hidden transition-all duration-500 ease-in-out">
+      
+      <!-- HEADER -->
+      <div class="bg-slate-50 p-4 border-b border-gray-200 shrink-0">
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="bg-blue-600 text-white p-1 rounded">
+                        <i class="fa-solid fa-calculator text-xs"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">R.M. N° 172-2016-VIVIENDA</span>
+                </div>
+                <h1 class="text-lg font-bold text-slate-800 leading-tight">Calculadora de Edificación 2026</h1>
+            </div>
+            <button onclick="resetCalculator()" class="text-xs text-red-500 hover:bg-red-50 p-1 px-2 rounded border border-red-200 transition-colors no-print">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Reiniciar
+            </button>
+        </div>
+        
+        <!-- SELECTOR DE REGIÓN -->
+        <div class="mt-3">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Región Tarifaria (R.M. 514-2025-EF/15)</label>
+            <select id="regionSelect" onchange="updateRegion()" class="block w-full mt-1 p-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+                <option value="lima">Lima Metropolitana y Callao</option>
+                <option value="costa">Costa (Excl. Lima/Callao)</option>
+                <option value="sierra">Sierra</option>
+                <option value="selva">Selva</option>
+            </select>
+        </div>
+      </div>
+
+      <!-- BODY SCROLLABLE -->
+      <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-6">
+
+        <!-- 1. DATOS GENERALES -->
+        <section class="space-y-3">
+            <h3 class="text-sm font-bold text-slate-700 border-b pb-1">1. Datos de la Edificación</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs text-slate-500">Material Predominante</label>
+                    <select id="materialSelect" onchange="calculate()" class="w-full mt-1 p-2 bg-slate-50 border rounded text-sm">
+                        <option value="concreto">Concreto</option>
+                        <option value="ladrillo">Ladrillo</option>
+                        <option value="adobe">Adobe/Quincha</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500">Estado Conservación</label>
+                    <select id="estadoSelect" onchange="calculate()" class="w-full mt-1 p-2 bg-slate-50 border rounded text-sm">
+                        <option value="muy_bueno">Muy Bueno</option>
+                        <option value="bueno">Bueno</option>
+                        <option value="regular">Regular</option>
+                        <option value="malo">Malo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500">Antigüedad (Años)</label>
+                    <input type="number" id="antiguedadInput" value="0" min="0" oninput="calculate()" class="w-full mt-1 p-2 bg-slate-50 border rounded text-sm text-right">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 font-bold">Área Techada (m²)</label>
+                    <input type="number" id="areaInput" value="100" min="1" oninput="calculate()" class="w-full mt-1 p-2 bg-blue-50 border border-blue-200 rounded text-sm font-bold text-right text-blue-800">
+                </div>
+            </div>
+            
+            <!-- Factor Depreciación Display -->
+            <div class="bg-yellow-50 p-2 rounded border border-yellow-200 flex justify-between items-center">
+                <span class="text-xs text-yellow-800"><i class="fa-solid fa-arrow-trend-down mr-1"></i> Depreciación (Tabla 1)</span>
+                <span id="deprecDisplay" class="text-sm font-bold text-yellow-900">0%</span>
+            </div>
+        </section>
+
+        <!-- 2. CATEGORÍAS (CUADRO DE VALORES UNITARIOS) -->
+        <section class="space-y-3">
+            <div class="flex justify-between items-end border-b pb-1">
+                <h3 class="text-sm font-bold text-slate-700">2. Componentes (S/ por m²)</h3>
+                <span class="text-[10px] text-slate-400">Fuente: Anexos I (2026)</span>
+            </div>
+            
+            <div id="categoriesContainer" class="space-y-3 text-sm">
+                <!-- Se llena dinámicamente con JS -->
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-100 p-3 rounded-lg">
+                <span class="font-semibold text-slate-600">Valor Unitario (S/.)</span>
+                <span id="valorUnitarioTotal" class="font-bold text-slate-800 text-lg">0.00</span>
+            </div>
+        </section>
+
+        <!-- 3. OBRAS COMPLEMENTARIAS -->
+        <section class="space-y-3">
+            <h3 class="text-sm font-bold text-slate-700 border-b pb-1">3. Valores Unitarios a Costo Directo</h3>
+            <p class="text-[10px] text-slate-400 -mt-2 mb-2">Obras complementarias e instalaciones fijas (Anexos III)</p>
+            
+            <div class="flex gap-2">
+                <select id="obrasSelect" class="flex-1 p-2 bg-slate-50 border rounded text-xs">
+                    <!-- JS llena esto con los 96 items -->
+                </select>
+                <input type="number" id="obraQty" placeholder="Cant." class="w-16 p-2 border rounded text-xs text-center">
+                <button onclick="addObra()" class="bg-blue-600 text-white px-3 rounded hover:bg-blue-700"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div id="obrasList" class="space-y-2 max-h-60 overflow-y-auto custom-scroll border border-slate-100 rounded bg-white p-1">
+                <!-- Lista de obras añadidas -->
+                <div class="text-center py-4 text-xs text-slate-400 italic" id="emptyObrasMsg">No hay obras añadidas</div>
+            </div>
+        </section>
+
+      </div>
+
+      <!-- FOOTER TOTALES -->
+      <div class="p-4 bg-slate-800 text-white shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.1)] z-10">
+        <div class="flex justify-between items-center mb-1 text-xs text-slate-400">
+            <span>Subtotal Edificación:</span>
+            <span id="subtotalEdif">S/. 0.00</span>
+        </div>
+        <div class="flex justify-between items-center mb-1 text-xs text-slate-400">
+            <span>Subtotal Obras Compl.:</span>
+            <span id="subtotalObras">S/. 0.00</span>
+        </div>
+        <div class="border-t border-slate-600 my-2"></div>
+        <div class="flex justify-between items-end">
+            <div>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400">Valor Total</p>
+                <p id="totalFinal" class="text-2xl font-bold leading-none text-green-400">S/. 0.00</p>
+            </div>
+            <button onclick="printReport()" class="bg-white text-slate-900 text-xs font-bold py-2 px-4 rounded hover:bg-slate-200 transition-colors no-print">
+                <i class="fa-solid fa-print mr-1"></i> Reporte
+            </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MAPA -->
+  <div id="map"></div>
+
+  <!-- LEAFLET JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // --- 1. DATA MASTER ---
+    // Definición de los 96 ítems de Obras Complementarias según Anexos III (2026)
+    // Los precios están organizados por región: Lima, Costa, Sierra, Selva
+    const MASTER_OBRAS_LIST = [
+        {id: 1, name: "Muro concreto armado, e=0.25m h=2.40m", unit: "m2", prices: {lima: 453.45, costa: 443.89, sierra: 444.14, selva: 457.72}},
+        {id: 2, name: "Muro traslúcido (tipo UNI) / metálico h=2.40m", unit: "m2", prices: {lima: 417.73, costa: 408.92, sierra: 409.15, selva: 421.66}},
+        {id: 3, name: "Muro ladrillo tarrajeado, col. concreto h>2.40m", unit: "m2", prices: {lima: 383.77, costa: 375.68, sierra: 375.89, selva: 387.38}},
+        {id: 4, name: "Muro ladrillo tarrajeado, col. concreto h<=2.40m", unit: "m2", prices: {lima: 336.07, costa: 328.99, sierra: 329.17, selva: 339.24}},
+        {id: 5, name: "Muro ladrillo solaqueado, col. concreto h<=2.40m", unit: "m2", prices: {lima: 281.01, costa: 275.09, sierra: 275.24, selva: 283.66}},
+        {id: 6, name: "Cerco de fierro/aluminio", unit: "m2", prices: {lima: 206.30, costa: 201.95, sierra: 202.06, selva: 208.24}},
+        {id: 7, name: "Muro ladrillo soga, cimentación", unit: "m2", prices: {lima: 235.30, costa: 230.34, sierra: 230.47, selva: 237.52}},
+        {id: 8, name: "Muro adobe, tapial o quincha tarrajeado", unit: "m2", prices: {lima: 150.76, costa: 147.58, sierra: 147.66, selva: 152.18}},
+        {id: 9, name: "Muro ladrillo cabeza, col. concreto h<=2.40m", unit: "m2", prices: {lima: 408.56, costa: 399.95, sierra: 400.17, selva: 412.41}},
+        {id: 10, name: "Puerta fierro/aluminio h=2.20m ancho<=2.00m", unit: "m2", prices: {lima: 618.00, costa: 604.98, sierra: 605.31, selva: 623.83}},
+        {id: 11, name: "Puerta fierro plancha h=2.20m ancho>2.00m", unit: "m2", prices: {lima: 590.41, costa: 577.96, sierra: 578.28, selva: 595.97}},
+        {id: 12, name: "Portón fierro plancha h>3.00m hasta 4.00m", unit: "m2", prices: {lima: 427.48, costa: 418.47, sierra: 418.70, selva: 468.54}},
+        {id: 13, name: "Puerta madera h=2.20m ancho<=2.00m", unit: "m2", prices: {lima: 449.15, costa: 439.68, sierra: 439.92, selva: 483.88}},
+        {id: 14, name: "Puerta madera h=2.20m ancho>2.00m", unit: "m2", prices: {lima: 404.21, costa: 395.68, sierra: 395.90, selva: 435.47}},
+        {id: 15, name: "Portón fierro plancha h<=3.00m", unit: "m2", prices: {lima: 360.87, costa: 353.26, sierra: 353.46, selva: 394.83}},
+        {id: 16, name: "Portón fierro plancha h>4.00m", unit: "m2", prices: {lima: 321.02, costa: 314.25, sierra: 314.43, selva: 351.30}},
+        {id: 17, name: "Tanque elevado concreto <= 5m3", unit: "m3", prices: {lima: 1316.09, costa: 1288.35, sierra: 1289.07, selva: 1328.49}},
+        {id: 18, name: "Tanque elevado plástico/fibra > 1m3", unit: "m3", prices: {lima: 1439.21, costa: 1408.88, sierra: 1409.66, selva: 1452.77}},
+        {id: 19, name: "Tanque elevado concreto > 5m3", unit: "m3", prices: {lima: 1103.04, costa: 1079.79, sierra: 1080.39, selva: 1113.43}},
+        {id: 20, name: "Tanque elevado concreto > 15m3", unit: "m3", prices: {lima: 977.16, costa: 956.56, sierra: 957.09, selva: 986.37}},
+        {id: 21, name: "Tanque elevado plástico/fibra <= 1m3", unit: "m3", prices: {lima: 1083.70, costa: 1060.86, sierra: 1061.45, selva: 1093.91}},
+        {id: 22, name: "Cisterna plástico/fibra > 1m3", unit: "m3", prices: {lima: 1483.42, costa: 1452.15, sierra: 1452.95, selva: 1497.39}},
+        {id: 23, name: "Cisterna concreto <= 5m3", unit: "m3", prices: {lima: 1488.89, costa: 1457.50, sierra: 1458.31, selva: 1502.91}},
+        {id: 24, name: "Cisterna concreto <= 10m3", unit: "m3", prices: {lima: 1241.37, costa: 1215.21, sierra: 1215.88, selva: 1253.07}},
+        {id: 25, name: "Cisterna concreto <= 20m3", unit: "m3", prices: {lima: 1092.61, costa: 1069.58, sierra: 1070.17, selva: 1102.90}},
+        {id: 26, name: "Cisterna, pozo ladrillo tarrajeado <= 5m3", unit: "m3", prices: {lima: 1176.91, costa: 1152.10, sierra: 1152.74, selva: 1188.00}},
+        {id: 27, name: "Cisterna concreto > 20m3", unit: "m3", prices: {lima: 901.92, costa: 882.91, sierra: 883.40, selva: 910.42}},
+        {id: 28, name: "Tanque plástico/fibra <= 1m3", unit: "m3", prices: {lima: 904.36, costa: 885.30, sierra: 885.79, selva: 912.88}},
+        {id: 29, name: "Piscina concreto c/mayólica <= 5m3", unit: "m3", prices: {lima: 1483.41, costa: 1452.14, sierra: 1452.94, selva: 1497.38}},
+        {id: 30, name: "Piscina concreto c/mayólica <= 10m3", unit: "m3", prices: {lima: 1236.70, costa: 1210.63, sierra: 1211.30, selva: 1248.35}},
+        {id: 31, name: "Piscina concreto c/mayólica > 10m3", unit: "m3", prices: {lima: 1182.92, costa: 1157.99, sierra: 1158.63, selva: 1194.07}},
+        {id: 32, name: "Piscina ladrillo KK c/pintura", unit: "m3", prices: {lima: 1019.30, costa: 997.81, sierra: 998.37, selva: 1028.90}},
+        {id: 33, name: "Losa concreto armado e=4\"", unit: "m2", prices: {lima: 170.50, costa: 166.91, sierra: 167.00, selva: 172.11}},
+        {id: 34, name: "Asfalto e=2\"", unit: "m2", prices: {lima: 141.85, costa: 138.86, sierra: 138.93, selva: 143.18}},
+        {id: 35, name: "Losa concreto simple e=4\"", unit: "m2", prices: {lima: 136.11, costa: 133.25, sierra: 133.32, selva: 137.40}},
+        {id: 36, name: "Vereda concreto e=4\"", unit: "m2", prices: {lima: 107.31, costa: 105.05, sierra: 105.10, selva: 108.32}},
+        {id: 37, name: "Horno concreto armado/refractario", unit: "m3", prices: {lima: 1596.70, costa: 1563.04, sierra: 1563.91, selva: 1611.74}},
+        {id: 38, name: "Horno ladrillo/refractario", unit: "m3", prices: {lima: 1346.81, costa: 1318.42, sierra: 1319.15, selva: 1359.50}},
+        {id: 39, name: "Horno adobe", unit: "m3", prices: {lima: 402.14, costa: 393.67, sierra: 393.88, selva: 405.93}},
+        {id: 40, name: "Torre de vigilancia (concreto)", unit: "und", prices: {lima: 7081.57, costa: 6932.30, sierra: 6936.14, selva: 7148.29}},
+        {id: 41, name: "Estructura concreto (sin torre)", unit: "und", prices: {lima: 4208.44, costa: 4119.73, sierra: 4122.01, selva: 4248.09}},
+        {id: 42, name: "Bóveda concreto armado reforzado", unit: "m3", prices: {lima: 1529.53, costa: 1497.29, sierra: 1498.12, selva: 1543.94}},
+        {id: 43, name: "Balanza industrial concreto", unit: "m3", prices: {lima: 869.64, costa: 851.31, sierra: 851.78, selva: 877.84}},
+        {id: 44, name: "Poste concreto/fierro con reflector", unit: "und", prices: {lima: 2583.43, costa: 2528.97, sierra: 2530.37, selva: 2607.76}},
+        {id: 45, name: "Dados concreto (soporte máquinas)", unit: "m3", prices: {lima: 1808.83, costa: 1770.71, sierra: 1771.69, selva: 1825.88}},
+        {id: 46, name: "Caja registro 24\"x24\"", unit: "und", prices: {lima: 342.64, costa: 335.41, sierra: 335.60, selva: 345.86}},
+        {id: 47, name: "Caja registro 12\"x24\"", unit: "und", prices: {lima: 332.67, costa: 325.66, sierra: 325.84, selva: 335.80}},
+        {id: 48, name: "Caja registro 10\"x20\"", unit: "und", prices: {lima: 284.29, costa: 278.30, sierra: 278.46, selva: 286.97}},
+        {id: 49, name: "Buzón de concreto standard", unit: "und", prices: {lima: 2518.08, costa: 2465.00, sierra: 2466.37, selva: 2541.80}},
+        {id: 50, name: "Parapeto ladrillo cabeza tarrajeado", unit: "m2", prices: {lima: 243.42, costa: 238.29, sierra: 238.42, selva: 245.71}},
+        {id: 51, name: "Parapeto ladrillo soga tarrajeado", unit: "m2", prices: {lima: 197.06, costa: 192.91, sierra: 193.01, selva: 198.92}},
+        {id: 52, name: "Parapeto ladrillo cabeza caravista", unit: "m2", prices: {lima: 169.09, costa: 165.52, sierra: 180.02, selva: 170.68}},
+        {id: 53, name: "Parapeto ladrillo soga caravista", unit: "m2", prices: {lima: 111.12, costa: 108.78, sierra: 108.84, selva: 112.17}},
+        {id: 54, name: "Escalera concreto armado c/acabados", unit: "m3", prices: {lima: 6133.92, costa: 6004.63, sierra: 6007.96, selva: 6191.71}},
+        {id: 55, name: "Escalera concreto armado s/acabados", unit: "m3", prices: {lima: 4954.27, costa: 4849.84, sierra: 4852.53, selva: 5000.95}},
+        {id: 56, name: "Rampa/Grada concreto c/encofrado", unit: "m3", prices: {lima: 2126.08, costa: 2081.27, sierra: 2082.42, selva: 2146.11}},
+        {id: 57, name: "Rampa concreto s/encofrado", unit: "m3", prices: {lima: 1735.70, costa: 1699.11, sierra: 1700.05, selva: 1752.05}},
+        {id: 58, name: "Muro contención concreto h=1.40m e=20cm", unit: "m3", prices: {lima: 1516.06, costa: 1484.10, sierra: 1484.92, selva: 1530.34}},
+        {id: 59, name: "Muro contención concreto h=2.50m e=20cm", unit: "m3", prices: {lima: 1345.55, costa: 1317.19, sierra: 1317.92, selva: 1358.23}},
+        {id: 60, name: "Muro contención concreto h=4.00m e=20cm", unit: "m3", prices: {lima: 1317.51, costa: 1289.74, sierra: 1290.45, selva: 1329.92}},
+        {id: 61, name: "Muro contención concreto h=1.40m e=15cm", unit: "m3", prices: {lima: 1313.51, costa: 1285.82, sierra: 1286.53, selva: 1325.88}},
+        {id: 62, name: "Muro contención concreto h=2.50m e=15cm", unit: "m3", prices: {lima: 1125.98, costa: 1102.24, sierra: 1102.86, selva: 1136.59}},
+        {id: 63, name: "Muro contención concreto h=4.00m e=15cm", unit: "m3", prices: {lima: 1091.29, costa: 1068.29, sierra: 1068.88, selva: 1101.58}},
+        {id: 64, name: "Escalera caracol metálica h=6.00m", unit: "und", prices: {lima: 9041.42, costa: 8850.84, sierra: 8855.75, selva: 9126.61}},
+        {id: 65, name: "Escalera caracol metálica h=3.00m", unit: "und", prices: {lima: 4749.91, costa: 4649.79, sierra: 4652.37, selva: 4794.66}},
+        {id: 66, name: "Escalera caracol metálica h=3.00m (entre pisos)", unit: "und", prices: {lima: 4291.51, costa: 4201.05, sierra: 4203.38, selva: 4331.95}},
+        {id: 67, name: "Pastorales h=2.20m", unit: "und", prices: {lima: 519.47, costa: 508.52, sierra: 508.80, selva: 524.37}},
+        {id: 68, name: "Proyector luminaria 250W vapor sodio", unit: "und", prices: {lima: 1054.39, costa: 1032.16, sierra: 1032.74, selva: 1064.32}},
+        {id: 69, name: "Proyector luminaria 150W vapor mercurio", unit: "und", prices: {lima: 980.80, costa: 960.13, sierra: 960.66, selva: 990.04}},
+        {id: 70, name: "Tubería concreto armado D=1.20m", unit: "ml", prices: {lima: 583.29, costa: 570.99, sierra: 571.31, selva: 588.78}},
+        {id: 71, name: "Tubería concreto D=18\" (45cm)", unit: "ml", prices: {lima: 369.50, costa: 361.71, sierra: 361.91, selva: 372.98}},
+        {id: 72, name: "Canaleta de concreto sin rejillas", unit: "ml", prices: {lima: 82.97, costa: 81.22, sierra: 81.27, selva: 83.75}},
+        {id: 73, name: "Zanja concreto armado (talleres)", unit: "ml", prices: {lima: 926.72, costa: 907.19, sierra: 907.69, selva: 935.45}},
+        {id: 74, name: "Poste concreto 12.00m + reflector", unit: "pza", prices: {lima: 5117.80, costa: 5009.92, sierra: 5012.70, selva: 5166.01}},
+        {id: 75, name: "Poste concreto 11.00m + reflector", unit: "pza", prices: {lima: 4199.26, costa: 4110.74, sierra: 4113.02, selva: 4238.82}},
+        {id: 76, name: "Poste concreto 10.00m + reflector", unit: "pza", prices: {lima: 3629.07, costa: 3552.58, sierra: 3554.55, selva: 3663.26}},
+        {id: 77, name: "Poste concreto 9.00m + reflector", unit: "pza", prices: {lima: 3001.16, costa: 2937.90, sierra: 2939.53, selva: 3029.44}},
+        {id: 78, name: "Poste concreto 8.00m + reflector", unit: "pza", prices: {lima: 2583.43, costa: 2528.97, sierra: 2530.37, selva: 2607.76}},
+        {id: 79, name: "Poste concreto 7.00m + reflector", unit: "pza", prices: {lima: 2110.21, costa: 2065.73, sierra: 2066.88, selva: 2130.10}},
+        {id: 80, name: "Poste concreto 3.00m + reflector", unit: "pza", prices: {lima: 964.46, costa: 944.13, sierra: 944.66, selva: 973.55}},
+        {id: 81, name: "Cubierta tejas arcilla o similar", unit: "m2", prices: {lima: 134.24, costa: 140.27, sierra: 142.91, selva: 144.61}},
+        {id: 82, name: "Cubierta ladrillo pastelero mezcla 1:5", unit: "m2", prices: {lima: 77.08, costa: 75.46, sierra: 75.50, selva: 77.81}},
+        {id: 83, name: "Cubierta ladrillo pastelero barro", unit: "m2", prices: {lima: 73.84, costa: 72.28, sierra: 72.32, selva: 74.53}},
+        {id: 84, name: "Cubierta torta de barro 2\"", unit: "m2", prices: {lima: 42.02, costa: 41.13, sierra: 41.16, selva: 42.42}},
+        {id: 85, name: "Pasamano metálico tubo 3\"", unit: "ml", prices: {lima: 412.34, costa: 403.64, sierra: 403.87, selva: 416.22}},
+        {id: 86, name: "Pasamano metálico tubo 2\"", unit: "ml", prices: {lima: 225.61, costa: 220.85, sierra: 220.98, selva: 227.74}},
+        {id: 87, name: "Pasamano metálico tubo 1\"", unit: "ml", prices: {lima: 171.03, costa: 167.42, sierra: 167.52, selva: 172.64}},
+        {id: 88, name: "Cerco metálico tubo 2\", malla #8", unit: "m2", prices: {lima: 242.15, costa: 237.04, sierra: 237.18, selva: 244.43}},
+        {id: 89, name: "Cerco metálico tubo 2\", malla #10", unit: "m2", prices: {lima: 224.45, costa: 219.72, sierra: 219.84, selva: 226.56}},
+        {id: 90, name: "Cerco metálico tubo 2\", malla #12", unit: "m2", prices: {lima: 201.44, costa: 197.19, sierra: 197.30, selva: 203.34}},
+        {id: 91, name: "Poste/estructura fierro h=4m", unit: "pza", prices: {lima: 535.62, costa: 524.33, sierra: 524.62, selva: 540.66}},
+        {id: 92, name: "Poste/estructura fierro h=2.50m", unit: "pza", prices: {lima: 313.28, costa: 306.68, sierra: 306.85, selva: 316.23}},
+        {id: 93, name: "Sardinel concreto e=0.15m h=0.35 s/pintura", unit: "ml", prices: {lima: 128.50, costa: 125.79, sierra: 125.86, selva: 129.71}},
+        {id: 94, name: "Sardinel concreto e=0.15m h=0.35 c/pintura", unit: "ml", prices: {lima: 141.17, costa: 138.19, sierra: 138.27, selva: 142.50}},
+        {id: 95, name: "Pista o losa de concreto 6\"", unit: "m2", prices: {lima: 197.92, costa: 193.75, sierra: 193.86, selva: 199.78}},
+        {id: 96, name: "Trampa de concreto armado para grasa", unit: "m3", prices: {lima: 1356.39, costa: 1327.80, sierra: 1328.54, selva: 1369.17}}
+    ];
+
+    // TABLA DE DEPRECIACIÓN N° 01 (VIVIENDA) - Simplificada para Materiales Clave
+    const DEPRECIATION_TABLE = {
+        'concreto': { 'muy_bueno': [0,5,10,15], 'bueno': [5,10,15,20], 'regular': [10,15,20,25], 'malo': [55,58,61,64] },
+        'ladrillo': { 'muy_bueno': [0,3,6,9], 'bueno': [8,23,14,17], 'regular': [20,11,26,29], 'malo': [60,63,66,69] },
+        'adobe':    { 'muy_bueno': [5,10,15,20], 'bueno': [30,20,25,30], 'regular': [15,35,40,45], 'malo': [65,70,75,80] }
+    };
+
+    // VALORES UNITARIOS 2026 (De los Anexos I)
+    const DATA_REGIONES = {
+        'lima': {
+            name: "Lima Metropolitana y Callao",
+            components: [
+                { id: 'muros', label: '1. Muros y Columnas', cats: [
+                    {cat:'A', val:976.30, desc:'Estructuras laminares curvadas...'},
+                    {cat:'B', val:629.46, desc:'Columnas/Vigas concreto...'},
+                    {cat:'C', val:422.98, desc:'Placas concreto/Albañilería...'},
+                    {cat:'D', val:409.04, desc:'Ladrillo sin concreto/Drywall...'},
+                    {cat:'E', val:287.96, desc:'Adobe, Tapial o Quincha...'},
+                    {cat:'F', val:222.15, desc:'Madera Estoraque, Pumaquiro...'},
+                    {cat:'G', val:127.78, desc:'Pircado con mezcla de barro...'}
+                ]},
+                { id: 'techos', label: '2. Techos', cats: [
+                    {cat:'A', val:592.97, desc:'Losa concreto > 6m luces...'},
+                    {cat:'B', val:386.87, desc:'Aligerados inclinados...'},
+                    {cat:'C', val:312.01, desc:'Aligerados horizontales...'},
+                    {cat:'D', val:198.04, desc:'Calamina/Fibrocemento vigas met.'},
+                    {cat:'E', val:73.83, desc:'Madera con impermeabilizante...'},
+                    {cat:'F', val:41.60, desc:'Calamina/Fibrocemento vigas mad.'},
+                    {cat:'G', val:27.91, desc:'Madera rústica o caña...'}
+                ]},
+                { id: 'pisos', label: '3. Pisos', cats: [
+                    {cat:'A', val:529.84, desc:'Mármol, Porcelanato importado...'},
+                    {cat:'B', val:279.28, desc:'Parquet fino, Cerámico alto tránsito...'},
+                    {cat:'C', val:176.22, desc:'Cerámico nacional, Parquet común...'},
+                    {cat:'D', val:154.35, desc:'Laminado, Vinílico...'},
+                    {cat:'E', val:132.06, desc:'Cemento pulido...'},
+                    {cat:'F', val:101.56, desc:'Madera corriente, Loseta...'},
+                    {cat:'G', val:53.56, desc:'Cemento frotachado...'}
+                ]},
+                { id: 'puertas', label: '4. Puertas y Ventanas', cats: [
+                    {cat:'A', val:529.84, desc:'Aluminio pesado, vidrio insulado...'},
+                    {cat:'B', val:279.28, desc:'Aluminio diseño esp., vidrio templado...'},
+                    {cat:'C', val:176.22, desc:'Aluminio/Madera fina, vidrio tratado...'},
+                    {cat:'D', val:154.35, desc:'Aluminio standard, vidrio transp...'},
+                    {cat:'E', val:132.06, desc:'Fierro, vidrio simple...'},
+                    {cat:'F', val:101.56, desc:'Madera corriente, marcos PVC...'},
+                    {cat:'G', val:53.56, desc:'Madera rústica...'}
+                ]}
+            ]
+        },
+        'costa': {
+            name: "Costa (Excl. Lima)",
+            components: [
+                { id: 'muros', label: '1. Muros y Columnas', cats: [
+                    {cat:'A', val:894.27, desc:'Estructuras laminares...'},
+                    {cat:'B', val:576.57, desc:'Columnas/Vigas concreto...'},
+                    {cat:'C', val:387.43, desc:'Placas concreto...'},
+                    {cat:'D', val:374.68, desc:'Ladrillo sin concreto...'},
+                    {cat:'E', val:263.77, desc:'Adobe/Tapial...'},
+                    {cat:'F', val:198.64, desc:'Madera Estoraque...'},
+                    {cat:'G', val:117.05, desc:'Pircado...'}
+                ]},
+                { id: 'techos', label: '2. Techos', cats: [
+                    {cat:'A', val:543.16, desc:'Losa concreto > 6m...'},
+                    {cat:'B', val:354.37, desc:'Aligerados inclinados...'},
+                    {cat:'C', val:285.80, desc:'Aligerados horizontales...'},
+                    {cat:'D', val:181.40, desc:'Calamina/Fibrocemento...'},
+                    {cat:'E', val:67.63, desc:'Madera impermeabilizante...'},
+                    {cat:'F', val:37.19, desc:'Calamina vigas madera...'},
+                    {cat:'G', val:25.57, desc:'Madera rústica...'}
+                ]},
+                { id: 'pisos', label: '3. Pisos (Ref Col 3)', cats: [
+                    {cat:'A', val:485.33, desc:'Mármol...'},
+                    {cat:'B', val:255.81, desc:'Parquet fino...'},
+                    {cat:'C', val:161.41, desc:'Cerámico...'},
+                    {cat:'D', val:141.39, desc:'Laminado...'},
+                    {cat:'E', val:120.98, desc:'Cemento...'},
+                    {cat:'F', val:90.81, desc:'Madera corriente...'},
+                    {cat:'G', val:49.05, desc:'Cemento frotachado...'}
+                ]},
+                 { id: 'puertas', label: '4. Puertas y Ventanas', cats: [
+                    {cat:'A', val:485.33, desc:'Aluminio pesado...'},
+                    {cat:'B', val:255.81, desc:'Vidrio templado...'},
+                    {cat:'C', val:161.41, desc:'Vidrio tratado...'},
+                    {cat:'D', val:141.39, desc:'Vidrio simple...'},
+                    {cat:'E', val:120.98, desc:'Fierro...'},
+                    {cat:'F', val:90.81, desc:'Madera corriente...'},
+                    {cat:'G', val:49.05, desc:'Madera rústica...'}
+                ]}
+            ]
+        },
+        'sierra': {
+            name: "Sierra",
+            components: [
+                { id: 'muros', label: '1. Muros y Columnas', cats: [
+                    {cat:'A', val:1010.95, desc:'Estructuras laminares...'},
+                    {cat:'B', val:601.44, desc:'Columnas/Vigas...'},
+                    {cat:'C', val:425.98, desc:'Placas...'},
+                    {cat:'D', val:393.47, desc:'Ladrillo...'},
+                    {cat:'E', val:308.89, desc:'Adobe...'},
+                    {cat:'F', val:192.61, desc:'Madera...'},
+                    {cat:'G', val:113.49, desc:'Pircado...'}
+                ]},
+                { id: 'techos', label: '2. Techos', cats: [
+                    {cat:'A', val:525.66, desc:'Losa...'},
+                    {cat:'B', val:361.40, desc:'Aligerado inclinado...'},
+                    {cat:'C', val:246.87, desc:'Aligerado horizontal...'},
+                    {cat:'D', val:251.48, desc:'Calamina...'},
+                    {cat:'E', val:76.73, desc:'Madera...'},
+                    {cat:'F', val:61.30, desc:'Calamina vigas madera...'},
+                    {cat:'G', val:0.00, desc:'Sin techo...'} // Nota: Ajustar según tabla si existe G
+                ]},
+                { id: 'pisos', label: '3. Pisos (Ref Col 3)', cats: [
+                    {cat:'A', val:399.00, desc:'Mármol...'},
+                    {cat:'B', val:353.08, desc:'Parquet...'},
+                    {cat:'C', val:147.50, desc:'Cerámico...'},
+                    {cat:'D', val:112.67, desc:'Laminado...'},
+                    {cat:'E', val:87.12, desc:'Cemento...'},
+                    {cat:'F', val:51.34, desc:'Madera corriente...'},
+                    {cat:'G', val:25.67, desc:'Madera rústica...'}
+                ]},
+                 { id: 'puertas', label: '4. Puertas y Ventanas', cats: [
+                    {cat:'A', val:399.00, desc:'Aluminio pesado...'},
+                    {cat:'B', val:353.08, desc:'Vidrio templado...'},
+                    {cat:'C', val:147.50, desc:'Vidrio tratado...'},
+                    {cat:'D', val:112.67, desc:'Vidrio simple...'},
+                    {cat:'E', val:87.12, desc:'Fierro...'},
+                    {cat:'F', val:51.34, desc:'Madera corriente...'},
+                    {cat:'G', val:25.67, desc:'Sin puertas...'}
+                ]}
+            ]
+        },
+        'selva': {
+            name: "Selva",
+            components: [
+                 { id: 'muros', label: '1. Muros y Columnas', cats: [
+                    {cat:'A', val:995.50, desc:'Estructuras laminares...'},
+                    {cat:'B', val:679.21, desc:'Columnas/Vigas...'},
+                    {cat:'C', val:489.75, desc:'Placas...'},
+                    {cat:'D', val:378.67, desc:'Ladrillo...'},
+                    {cat:'E', val:300.68, desc:'Madera selecta/Pilotes...'},
+                    {cat:'F', val:205.37, desc:'Madera corriente...'},
+                    {cat:'G', val:102.68, desc:'Madera rústica...'},
+                    {cat:'H', val:41.08, desc:'Caña Guayaquil...'}
+                ]},
+                { id: 'techos', label: '2. Techos', cats: [
+                    {cat:'A', val:509.83, desc:'Losa...'},
+                    {cat:'B', val:360.15, desc:'Inclinado...'},
+                    {cat:'C', val:265.25, desc:'Horizontal...'},
+                    {cat:'D', val:231.25, desc:'Calamina...'},
+                    {cat:'E', val:168.37, desc:'Madera tratada...'},
+                    {cat:'F', val:60.91, desc:'Calamina vigas madera...'},
+                    {cat:'G', val:77.41, desc:'Techos de palmas...'}
+                ]},
+                { id: 'pisos', label: '3. Pisos (Ref Col 3)', cats: [
+                    {cat:'A', val:421.72, desc:'Mármol...'},
+                    {cat:'B', val:334.51, desc:'Parquet...'},
+                    {cat:'C', val:248.79, desc:'Cerámico...'},
+                    {cat:'D', val:166.76, desc:'Laminado...'},
+                    {cat:'E', val:108.28, desc:'Cemento...'},
+                    {cat:'F', val:88.32, desc:'Madera corriente...'},
+                    {cat:'G', val:52.11, desc:'Madera rústica...'}
+                ]},
+                 { id: 'puertas', label: '4. Puertas y Ventanas', cats: [
+                    {cat:'A', val:421.72, desc:'Aluminio pesado...'},
+                    {cat:'B', val:334.51, desc:'Vidrio templado...'},
+                    {cat:'C', val:248.79, desc:'Vidrio tratado...'},
+                    {cat:'D', val:166.76, desc:'Vidrio simple...'},
+                    {cat:'E', val:108.28, desc:'Fierro...'},
+                    {cat:'F', val:88.32, desc:'Madera corriente...'},
+                    {cat:'G', val:52.11, desc:'Madera rústica...'}
+                ]}
+            ]
+        }
+    };
+
+    // --- 2. CONFIGURACIÓN DEL MAPA ---
+    const map = L.map("map", { zoomControl: false }).setView([-9.19, -75.0152], 6);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; Lab Urban Risk',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
+
+    // DUMMY REGIONS (Solo para interactividad, coordenadas aproximadas)
+    const regionsGeoJSON = {
+        "type": "FeatureCollection",
+        "features": [
+            { "type": "Feature", "properties": { "id": "lima", "name": "Lima/Callao", "color": "#2563eb" }, "geometry": { "type": "Polygon", "coordinates": [[[-77.2, -11.5], [-76.5, -11.5], [-76.5, -12.5], [-77.2, -12.5], [-77.2, -11.5]]] } },
+            { "type": "Feature", "properties": { "id": "costa", "name": "Costa", "color": "#f59e0b" }, "geometry": { "type": "Polygon", "coordinates": [[[-81, -3], [-79, -3], [-75, -14], [-71, -18], [-74, -18], [-81, -6], [-81, -3]]] } }, // Aproximación
+            { "type": "Feature", "properties": { "id": "sierra", "name": "Sierra", "color": "#78350f" }, "geometry": { "type": "Polygon", "coordinates": [[[-79, -5], [-76, -5], [-69, -16], [-70, -18], [-74, -14], [-79, -5]]] } },
+            { "type": "Feature", "properties": { "id": "selva", "name": "Selva", "color": "#16a34a" }, "geometry": { "type": "Polygon", "coordinates": [[[-76, -0], [-70, -0], [-68, -10], [-75, -12], [-78, -5], [-76, -0]]] } }
+        ]
+    };
+
+    L.geoJSON(regionsGeoJSON, {
+        style: function(feature) {
+            return { color: feature.properties.color, weight: 2, fillOpacity: 0.2 };
+        },
+        onEachFeature: function(feature, layer) {
+            layer.bindTooltip(feature.properties.name, {permanent: false, direction: 'center'});
+            layer.on('click', function() {
+                document.getElementById('regionSelect').value = feature.properties.id;
+                updateRegion();
+                // Animación visual
+                layer.setStyle({ fillOpacity: 0.6 });
+                setTimeout(() => { layer.setStyle({ fillOpacity: 0.2 }); }, 500);
+            });
+        }
+    }).addTo(map);
+
+
+    // --- 3. LÓGICA CALCULADORA ---
+    let currentObras = [];
+
+    function init() {
+        updateRegion();
+    }
+
+    function updateRegion() {
+        const regionKey = document.getElementById('regionSelect').value;
+        const data = DATA_REGIONES[regionKey];
+        
+        // 1. Renderizar Categorías
+        const container = document.getElementById('categoriesContainer');
+        container.innerHTML = '';
+        
+        data.components.forEach(comp => {
+            let html = `
+                <div class="bg-slate-50 p-2 rounded border border-slate-200">
+                    <div class="text-xs font-bold text-slate-600 mb-1">${comp.label}</div>
+                    <select class="category-select w-full p-1.5 text-xs border rounded bg-white" onchange="calculate()">
+                        <option value="0" data-val="0">-- Seleccione Categoría --</option>
+            `;
+            
+            comp.cats.forEach(cat => {
+                html += `<option value="${cat.cat}" data-val="${cat.val}">Cat. ${cat.cat} - S/. ${cat.val.toFixed(2)} (${cat.desc.substring(0,25)}...)</option>`;
+            });
+            
+            html += `</select></div>`;
+            container.innerHTML += html;
+        });
+
+        // 2. Renderizar Obras Compl. Disponibles desde MASTER_OBRAS_LIST
+        const obrasSelect = document.getElementById('obrasSelect');
+        obrasSelect.innerHTML = '<option value="">-- Seleccionar Ítem --</option>';
+        
+        MASTER_OBRAS_LIST.forEach(obra => {
+            const price = obra.prices[regionKey] || 0; // Obtener precio específico para la región seleccionada
+            obrasSelect.innerHTML += `<option value="${obra.id}" data-val="${price}" data-name="${obra.name}" data-unit="${obra.unit}">${obra.id}. ${obra.name} - S/.${price.toFixed(2)}/${obra.unit}</option>`;
+        });
+
+        calculate();
+    }
+
+    function getDepreciationPct(material, state, age) {
+        // Lógica simplificada basada en intervalos de 5 años
+        // Tabla 1: Intervalos [0-5, 6-10, 11-15, ...]
+        
+        let intervalIndex = Math.floor(age / 5);
+        if (intervalIndex > 3) intervalIndex = 3; // Cap en el 4to intervalo para este demo simple
+        
+        // Mapeo seguro
+        const matKey = material; // concreto, ladrillo, adobe
+        const stateKey = state; // muy_bueno, bueno, regular, malo
+        
+        if (!DEPRECIATION_TABLE[matKey]) return 0;
+        
+        const percentages = DEPRECIATION_TABLE[matKey][stateKey];
+        if (!percentages) return 0;
+        
+        // Si la edad excede el array, usar el último
+        if (intervalIndex >= percentages.length) return percentages[percentages.length-1];
+        
+        return percentages[intervalIndex];
+    }
+
+    function calculate() {
+        // 1. Calcular Valor Unitario Total
+        let totalUnitario = 0;
+        document.querySelectorAll('.category-select').forEach(sel => {
+            const opt = sel.options[sel.selectedIndex];
+            totalUnitario += parseFloat(opt.getAttribute('data-val') || 0);
+        });
+        document.getElementById('valorUnitarioTotal').innerText = totalUnitario.toFixed(2);
+
+        // 2. Calcular Depreciación
+        const mat = document.getElementById('materialSelect').value;
+        const est = document.getElementById('estadoSelect').value;
+        const age = parseInt(document.getElementById('antiguedadInput').value) || 0;
+        
+        const deprecPct = getDepreciationPct(mat, est, age);
+        document.getElementById('deprecDisplay').innerText = deprecPct + "%";
+        const factorDepreciacion = 1 - (deprecPct / 100);
+
+        // 3. Valor Edificación
+        const area = parseFloat(document.getElementById('areaInput').value) || 0;
+        const valEdificacion = totalUnitario * area * factorDepreciacion;
+        document.getElementById('subtotalEdif').innerText = "S/. " + valEdificacion.toLocaleString('es-PE', {minimumFractionDigits: 2});
+
+        // 4. Obras Complementarias
+        let valObras = 0;
+        currentObras.forEach(o => valObras += o.total);
+        document.getElementById('subtotalObras').innerText = "S/. " + valObras.toLocaleString('es-PE', {minimumFractionDigits: 2});
+
+        // 5. Total
+        const total = valEdificacion + valObras;
+        document.getElementById('totalFinal').innerText = "S/. " + total.toLocaleString('es-PE', {minimumFractionDigits: 2});
+    }
+
+    function addObra() {
+        const sel = document.getElementById('obrasSelect');
+        const opt = sel.options[sel.selectedIndex];
+        if(!opt.value) return;
+
+        const qty = parseFloat(document.getElementById('obraQty').value) || 0;
+        if(qty <= 0) return;
+
+        const val = parseFloat(opt.getAttribute('data-val'));
+        const name = opt.getAttribute('data-name');
+        const unit = opt.getAttribute('data-unit');
+
+        currentObras.push({
+            id: Date.now(),
+            name: name,
+            qty: qty,
+            unit: unit,
+            val: val,
+            total: val * qty
+        });
+
+        renderObrasList();
+        calculate();
+        
+        // Reset inputs
+        document.getElementById('obraQty').value = '';
+        sel.value = "";
+    }
+
+    function removeObra(id) {
+        currentObras = currentObras.filter(o => o.id !== id);
+        renderObrasList();
+        calculate();
+    }
+
+    function renderObrasList() {
+        const list = document.getElementById('obrasList');
+        const emptyMsg = document.getElementById('emptyObrasMsg');
+        
+        // Limpiar lista (manteniendo el mensaje de vacío oculto/visible)
+        // Mejor reconstruir todo
+        if (currentObras.length === 0) {
+            list.innerHTML = '<div class="text-center py-4 text-xs text-slate-400 italic" id="emptyObrasMsg">No hay obras añadidas</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        currentObras.forEach(o => {
+            list.innerHTML += `
+                <div class="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100 text-xs mb-1 last:mb-0">
+                    <div>
+                        <div class="font-bold text-slate-700 w-48 truncate" title="${o.name}">${o.name}</div>
+                        <div class="text-slate-500">${o.qty} ${o.unit} x S/.${o.val.toFixed(2)}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-blue-700">S/.${o.total.toFixed(2)}</span>
+                        <button onclick="removeObra(${o.id})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function resetCalculator() {
+        document.getElementById('antiguedadInput').value = 0;
+        document.getElementById('areaInput').value = 100;
+        document.getElementById('materialSelect').selectedIndex = 0;
+        document.getElementById('estadoSelect').selectedIndex = 0;
+        currentObras = [];
+        renderObrasList();
+        updateRegion(); // Resets categories
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    // --- UI TOGGLE ---
+    const toggleBtn = document.getElementById('toggleSideBtn');
+    const mainPanel = document.getElementById('mainPanel');
+    const uiContainer = document.getElementById('uiContainer');
+    let isOpen = true;
+
+    toggleBtn.addEventListener('click', () => {
+        isOpen = !isOpen;
+        if(isOpen) {
+            mainPanel.classList.remove('panel-hidden');
+            mainPanel.classList.add('panel-visible');
+            toggleBtn.querySelector('i').className = "fa-solid fa-chevron-left text-lg";
+            uiContainer.classList.remove('pointer-events-none');
+        } else {
+            mainPanel.classList.remove('panel-visible');
+            mainPanel.classList.add('panel-hidden');
+            toggleBtn.querySelector('i').className = "fa-solid fa-chevron-right text-lg";
+            uiContainer.classList.add('pointer-events-none');
+        }
+    });
+
+    // Iniciar
+    init();
+
+  </script>
+</body>
+</html>
