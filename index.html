@@ -131,7 +131,7 @@
             <div class="flex flex-col gap-3">
                 <div>
                     <label class="text-xs text-slate-500 font-semibold mb-1 block">Material Predominante</label>
-                    <select id="materialSelect" onchange="calculate()" class="w-full p-2 bg-slate-50 border rounded-lg text-sm h-10">
+                    <select id="materialSelect" class="w-full p-2 bg-slate-50 border rounded-lg text-sm h-10">
                         <option value="concreto">Concreto</option>
                         <option value="ladrillo">Ladrillo</option>
                         <option value="adobe">Adobe/Quincha</option>
@@ -139,7 +139,7 @@
                 </div>
                 <div>
                     <label class="text-xs text-slate-500 font-semibold mb-1 block">Estado de Conservación</label>
-                    <select id="estadoSelect" onchange="calculate()" class="w-full p-2 bg-slate-50 border rounded-lg text-sm h-10">
+                    <select id="estadoSelect" class="w-full p-2 bg-slate-50 border rounded-lg text-sm h-10">
                         <option value="muy_bueno">Muy Bueno</option>
                         <option value="bueno">Bueno</option>
                         <option value="regular">Regular</option>
@@ -148,11 +148,11 @@
                 </div>
                 <div>
                     <label class="text-xs text-slate-500 font-semibold mb-1 block">Antigüedad (Años)</label>
-                    <input type="number" id="antiguedadInput" value="0" min="0" oninput="calculate()" class="w-full p-2 bg-slate-50 border rounded-lg text-sm text-right h-10">
+                    <input type="number" id="antiguedadInput" value="0" min="0" class="w-full p-2 bg-slate-50 border rounded-lg text-sm text-right h-10">
                 </div>
                 <div>
                     <label class="text-xs text-slate-500 font-bold mb-1 block">Área Techada Total (m²)</label>
-                    <input type="number" id="areaInput" value="100" min="1" oninput="calculate()" class="w-full p-2 bg-blue-50 border border-blue-200 rounded-lg text-sm font-bold text-right text-blue-800 h-10">
+                    <input type="number" id="areaInput" value="100" min="1" class="w-full p-2 bg-blue-50 border border-blue-200 rounded-lg text-sm font-bold text-right text-blue-800 h-10">
                 </div>
             </div>
             
@@ -199,6 +199,11 @@
                 <div class="text-center py-4 text-xs text-slate-400 italic" id="emptyObrasMsg">Sin obras adicionales</div>
             </div>
         </section>
+
+        <!-- BOTÓN CALCULAR (NUEVO) -->
+        <button onclick="calculate()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform active:scale-95 transition-all text-lg flex items-center justify-center gap-2 mb-4">
+            <i class="fa-solid fa-calculator"></i> CALCULAR VALOR EDIFICACIÓN
+        </button>
 
       </div>
 
@@ -623,7 +628,7 @@
             // Restaurar visualmente
             updateRegion(false); // false = no resetear categorías
             renderObrasList();
-            calculate();
+            // Ya no calculamos automáticamente al inicio, solo restauramos valores
         }
         
         // Mobile panel logic check
@@ -644,7 +649,7 @@
             let html = `
                 <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
                     <div class="text-xs font-bold text-slate-600 mb-1">${comp.label}</div>
-                    <select class="category-select w-full p-2 text-sm border rounded bg-white h-10" onchange="calculate()">
+                    <select class="category-select w-full p-2 text-sm border rounded bg-white h-10">
                         <option value="0" data-val="0">-- Seleccionar --</option>
             `;
             
@@ -673,7 +678,7 @@
         }
         
         // Reset categories if requested (new region)
-        if(resetCats) calculate();
+        // Eliminado cálculo automático aquí
         saveState();
     }
 
@@ -712,16 +717,16 @@
         // 3. Subtotal 1: Valor Edificación (Base)
         const area = parseFloat(document.getElementById('areaInput').value) || 0;
         const subtotal1 = totalUnitario * area * factorDepreciacion;
-        document.getElementById('subtotal1').innerText = "S/. " + subtotal1.toLocaleString('es-PE', {minimumFractionDigits: 2});
+        document.getElementById('subtotalEdif').innerText = "S/. " + subtotal1.toLocaleString('es-PE', {minimumFractionDigits: 2});
 
         // 4. Subtotal 2: Obras Complementarias
         let subtotal2 = 0;
         currentObras.forEach(o => subtotal2 += o.total);
-        document.getElementById('subtotal2').innerText = "S/. " + subtotal2.toLocaleString('es-PE', {minimumFractionDigits: 2});
+        document.getElementById('subtotalObras').innerText = "S/. " + subtotal2.toLocaleString('es-PE', {minimumFractionDigits: 2});
 
         // 5. Total Valor Edificación (Suma de Subtotales)
         const totalEdificacion = subtotal1 + subtotal2;
-        document.getElementById('totalEdificacion').innerText = "S/. " + totalEdificacion.toLocaleString('es-PE', {minimumFractionDigits: 2});
+        document.getElementById('totalFinal').innerText = "S/. " + totalEdificacion.toLocaleString('es-PE', {minimumFractionDigits: 2});
         
         // Actualizar visualización automática en sección Predio
         document.getElementById('displayEdificacionAuto').innerText = "S/. " + totalEdificacion.toLocaleString('es-PE', {minimumFractionDigits: 2});
@@ -737,7 +742,7 @@
         let valEdificacion = totalEdif;
         if (typeof valEdificacion === 'undefined') {
              // Limpiar formato S/. y comas para obtener número limpio
-             const text = document.getElementById('totalEdificacion').innerText.replace('S/. ', '').replace(/,/g, '');
+             const text = document.getElementById('totalFinal').innerText.replace('S/. ', '').replace(/,/g, '');
              valEdificacion = parseFloat(text) || 0;
         }
 
@@ -771,7 +776,7 @@
         });
 
         renderObrasList();
-        calculate();
+        // Eliminado calculate() automático al añadir obra
         
         document.getElementById('obraQty').value = '';
         sel.value = "";
@@ -780,7 +785,7 @@
     function removeObra(id) {
         currentObras = currentObras.filter(o => o.id !== id);
         renderObrasList();
-        calculate();
+        // Eliminado calculate() automático al borrar obra
     }
 
     function renderObrasList() {
@@ -818,6 +823,12 @@
             currentObras = [];
             renderObrasList();
             updateRegion();
+            // Reset results display manually
+            document.getElementById('subtotalEdif').innerText = "S/. 0.00";
+            document.getElementById('subtotalObras').innerText = "S/. 0.00";
+            document.getElementById('totalFinal').innerText = "S/. 0.00";
+            document.getElementById('displayEdificacionAuto').innerText = "0.00";
+            document.getElementById('valorPredioTotal').innerText = "S/. 0.00";
         }
     }
 
