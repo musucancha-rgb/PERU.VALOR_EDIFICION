@@ -61,8 +61,8 @@
 <body class="bg-gray-100 overflow-hidden relative h-screen w-screen">
 
   <!-- BOTÓN FLOTANTE (MÓVIL) - CENTRADO ABAJO -->
-  <button id="mobileToggleBtn" class="md:hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[2000] bg-green-600 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:bg-green-700 active:scale-90 transition-all duration-200 ring-4 ring-white/30">
-    <i class="fa-solid fa-calculator text-2xl"></i>
+  <button id="mobileToggleBtn" class="md:hidden absolute bottom-24 left-1/2 transform -translate-x-1/2 z-[2000] bg-green-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:bg-green-700 active:scale-90 transition-all duration-200 ring-4 ring-white/30">
+    <i class="fa-solid fa-calculator text-xl"></i>
   </button>
 
   <!-- BOTÓN LATERAL (DESKTOP) -->
@@ -83,13 +83,7 @@
 
       <!-- HEADER -->
       <div class="bg-slate-50/80 p-4 border-b border-gray-200 shrink-0 relative">
-        
-        <!-- ICONO CALCULADORA VERDE CENTRADO ARRIBA -->
-        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 md:translate-y-0 md:top-4 bg-green-600 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-10 border-4 border-white">
-            <i class="fa-solid fa-calculator text-lg"></i>
-        </div>
-
-        <div class="flex justify-between items-start mt-4 md:mt-2">
+        <div class="flex justify-between items-start mt-2">
             <div>
                 <div class="flex items-center gap-2 mb-1">
                     <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">R.M. N° 172-2016</span>
@@ -125,7 +119,7 @@
       </div>
 
       <!-- BODY SCROLLABLE -->
-      <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-6 pb-40 md:pb-32">
+      <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-6">
 
         <!-- 1. DATOS GENERALES -->
         <section class="space-y-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
@@ -174,13 +168,10 @@
             <div id="categoriesContainer" class="space-y-3 text-sm">
                 <!-- Dinámico -->
             </div>
-            
-            <!-- (Valor Unitario movido al final) -->
         </section>
 
         <!-- 3. OBRAS COMPLEMENTARIAS -->
         <section class="space-y-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-            <!-- NUEVO TÍTULO PARA LISTA -->
             <h3 class="text-sm font-bold text-slate-700 border-b pb-1">3. Valores unitarios a costo directo</h3>
             
             <div class="flex flex-col gap-2">
@@ -205,95 +196,96 @@
             <i class="fa-solid fa-calculator"></i> CALCULAR VALOR EDIFICACIÓN
         </button>
 
-      </div>
-
-      <!-- FOOTER TOTALES -->
-      <div class="p-4 bg-slate-800 text-white shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.2)] z-10 pb-6 md:pb-4">
-        
-        <!-- SUBTOTALES DESGLOSADOS -->
-        <div class="space-y-1 mb-3">
-            <div class="flex justify-between items-center text-[11px] text-slate-400">
-                <span>1. Subtotal del Valor unitario oficial de edificación:</span>
-                <span id="subtotalEdif" class="font-mono">S/. 0.00</span>
-            </div>
-            <div class="flex justify-between items-center text-[11px] text-slate-400">
-                <span>2. Subtotal del valor unitarios a costo directo:</span>
-                <span id="subtotalObras" class="font-mono">S/. 0.00</span>
-            </div>
-        </div>
-        
-        <div class="border-t border-slate-600 my-2"></div>
-        
-        <!-- TOTAL EDIFICACIÓN -->
-        <div class="flex justify-between items-end mb-2">
-            <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-300 font-bold">Valor de la Edificación</p>
-                <p id="totalFinal" class="text-2xl font-bold leading-none text-green-400">S/. 0.00</p>
-            </div>
-        </div>
-
-        <!-- VALOR UNITARIO (MOVIDO AQUÍ PARA COHERENCIA) -->
-        <div class="flex justify-between items-center bg-slate-700/50 p-2 rounded mb-4 border border-slate-600">
-            <span class="text-[10px] uppercase tracking-widest text-slate-300">Valor Unitario (S/m²)</span>
-            <span id="valorUnitarioTotal" class="font-bold text-slate-200 text-sm">0.00</span>
-        </div>
-
-        <!-- SECCIÓN CÁLCULO PREDIO -->
-        <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600 mb-4">
-            <h4 class="text-sm font-bold text-orange-400 mb-2">¿Quieres obtener el valor total del predio?</h4>
-            
-            <!-- FÓRMULA VISUAL -->
-            <div class="flex items-end gap-2 mb-2 text-xs">
-                <div class="flex-1">
-                    <label class="text-[9px] text-slate-400 block mb-1">V. Terreno (completar)</label>
-                    <input type="number" id="valorTerrenoInput" placeholder="0.00" class="w-full p-2 rounded bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 text-right" oninput="calculatePredio()">
+        <!-- SECCIÓN DE RESULTADOS (MOVIDA DENTRO DEL FLUJO) -->
+        <div class="bg-slate-800 text-white p-4 rounded-xl shadow-lg space-y-4 mb-4">
+             <!-- SUBTOTALES DESGLOSADOS -->
+            <div class="space-y-1">
+                <div class="flex justify-between items-center text-[11px] text-slate-400">
+                    <span>1. Subtotal Valor unitario oficial:</span>
+                    <span id="subtotalEdif" class="font-mono text-slate-200">S/. 0.00</span>
                 </div>
-                <div class="text-slate-400 font-bold pb-2">+</div>
-                <div class="flex-1">
-                    <label class="text-[9px] text-slate-400 block mb-1">V. Edificación (auto)</label>
-                    <div id="displayEdificacionAuto" class="w-full p-2 rounded bg-slate-600 text-slate-300 font-bold text-right border border-slate-500">
-                        0.00
+                <div class="flex justify-between items-center text-[11px] text-slate-400">
+                    <span>2. Subtotal Obras costo directo:</span>
+                    <span id="subtotalObras" class="font-mono text-slate-200">S/. 0.00</span>
+                </div>
+            </div>
+            
+            <div class="border-t border-slate-600"></div>
+            
+            <!-- TOTAL EDIFICACIÓN -->
+            <div class="flex justify-between items-end">
+                <div>
+                    <p class="text-[10px] uppercase tracking-widest text-slate-300 font-bold">Valor de la Edificación</p>
+                    <p id="totalFinal" class="text-2xl font-bold leading-none text-green-400">S/. 0.00</p>
+                </div>
+            </div>
+
+            <!-- VALOR UNITARIO -->
+            <div class="flex justify-between items-center bg-slate-700/50 p-2 rounded border border-slate-600">
+                <span class="text-[10px] uppercase tracking-widest text-slate-300">Valor Unitario (S/m²)</span>
+                <span id="valorUnitarioTotal" class="font-bold text-slate-200 text-sm">0.00</span>
+            </div>
+
+            <!-- SECCIÓN CÁLCULO PREDIO -->
+            <div class="bg-slate-700/80 p-3 rounded-lg border border-slate-600">
+                <h4 class="text-sm font-bold text-orange-400 mb-2">¿Quieres obtener el valor del predio?</h4>
+                <p class="text-[10px] text-slate-400 mb-2 font-mono">VPredio = VTerreno + VEdificación</p>
+                
+                <!-- FÓRMULA VISUAL -->
+                <div class="flex items-end gap-2 mb-2 text-xs">
+                    <div class="flex-1">
+                        <label class="text-[9px] text-slate-400 block mb-1">V. Terreno (S/.)</label>
+                        <input type="number" id="valorTerrenoInput" placeholder="0.00" class="w-full p-2 rounded bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 text-right" onchange="calculatePredio()">
+                    </div>
+                    <div class="text-slate-400 font-bold pb-2">+</div>
+                    <div class="flex-1">
+                        <label class="text-[9px] text-slate-400 block mb-1">V. Edificación</label>
+                        <div id="displayEdificacionAuto" class="w-full p-2 rounded bg-slate-600 text-slate-300 font-bold text-right border border-slate-500 truncate">
+                            0.00
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- RESULTADO PREDIO -->
-            <div class="flex justify-between items-center mt-3 bg-orange-500/20 p-2 rounded border border-orange-500/50">
-                <span class="text-xs font-bold text-orange-200">V. PREDIO TOTAL:</span>
-                <span id="valorPredioTotal" class="text-lg font-bold text-white">S/. 0.00</span>
-            </div>
-            
-            <!-- LINK ARANCELARIO -->
-            <div class="mt-2 text-right">
-                 <a href="https://musucancha-rgb.github.io/mapa-mef-2026/" target="_blank" class="text-blue-300 hover:text-white text-[10px] inline-flex items-center gap-1 bg-slate-800 px-2 py-1 rounded border border-slate-600 transition-colors hover:bg-slate-700">
-                    <i class="fa-solid fa-map-location-dot"></i> Consultar Valor Arancelario 2026
-                </a>
+                <!-- RESULTADO PREDIO -->
+                <div class="flex justify-between items-center mt-3 bg-orange-500/20 p-2 rounded border border-orange-500/50">
+                    <span class="text-xs font-bold text-orange-200">V. PREDIO TOTAL:</span>
+                    <span id="valorPredioTotal" class="text-lg font-bold text-white">S/. 0.00</span>
+                </div>
             </div>
         </div>
-        
-        <!-- CREDITOS -->
-        <div class="mt-4 pt-3 border-t border-slate-700 flex flex-col items-center gap-2">
-            <span class="text-[10px] font-bold text-slate-400">Elaborado por Lab Urban Risk</span>
-            <div class="flex gap-6 text-sm">
-                <!-- YouTube (Rojo) -->
-                <a href="https://youtube.com/@laburbanrisk" target="_blank" class="text-red-500 hover:text-red-400 transform hover:scale-110">
-                    <i class="fa-brands fa-youtube fa-lg"></i>
+
+      </div>
+
+      <!-- FOOTER FIJO (NEGRO) -->
+      <div class="bg-black text-white shrink-0 p-4 border-t border-gray-800 z-20 flex flex-col items-center justify-center gap-3">
+          <p class="text-[10px] font-bold text-gray-400 tracking-wide">Elaborado por Lab Urban Risk</p>
+          
+          <div class="flex items-center gap-6">
+               <!-- Icono Link Arancelario -->
+               <a href="https://musucancha-rgb.github.io/mapa-mef-2026/" target="_blank" class="text-blue-400 hover:text-blue-300 transition-transform transform hover:scale-110" title="Ver Mapa Valores Arancelarios">
+                    <i class="fa-solid fa-map-location-dot text-2xl"></i>
                 </a>
-                <!-- Facebook (Azul) -->
-                <a href="https://www.facebook.com/share/1Db3ZgmTE4/?mibextid=wwXIfr" target="_blank" class="text-blue-500 hover:text-blue-400 transform hover:scale-110">
-                    <i class="fa-brands fa-facebook fa-lg"></i>
+               
+                <!-- Separador -->
+                <div class="w-px h-6 bg-gray-700"></div>
+
+               <!-- YouTube -->
+                <a href="https://youtube.com/@laburbanrisk" target="_blank" class="text-red-500 hover:text-red-400 transition-transform transform hover:scale-110">
+                    <i class="fa-brands fa-youtube text-2xl"></i>
                 </a>
-                <!-- Instagram (Rosa) -->
-                <a href="https://www.instagram.com/laburbanrisk?igsh=MWNzam53enpzZng4Ng%3D%3D&utm_source=qr" target="_blank" class="text-pink-500 hover:text-pink-400 transform hover:scale-110">
-                    <i class="fa-brands fa-instagram fa-lg"></i>
+                <!-- Facebook -->
+                <a href="https://www.facebook.com/share/1Db3ZgmTE4/?mibextid=wwXIfr" target="_blank" class="text-blue-600 hover:text-blue-500 transition-transform transform hover:scale-110">
+                    <i class="fa-brands fa-facebook text-2xl"></i>
                 </a>
-                <!-- TikTok (Blanco) -->
-                <a href="https://www.tiktok.com/@laburbanrisk?_r=1&_t=ZN-92idJVeblZe" target="_blank" class="text-white hover:text-gray-300 transform hover:scale-110">
-                    <i class="fa-brands fa-tiktok fa-lg"></i>
+                <!-- Instagram -->
+                <a href="https://www.instagram.com/laburbanrisk?igsh=MWNzam53enpzZng4Ng%3D%3D&utm_source=qr" target="_blank" class="text-pink-500 hover:text-pink-400 transition-transform transform hover:scale-110">
+                    <i class="fa-brands fa-instagram text-2xl"></i>
                 </a>
-            </div>
-        </div>
-        
+                <!-- TikTok -->
+                <a href="https://www.tiktok.com/@laburbanrisk?_r=1&_t=ZN-92idJVeblZe" target="_blank" class="text-white hover:text-gray-300 transition-transform transform hover:scale-110">
+                    <i class="fa-brands fa-tiktok text-2xl"></i>
+                </a>
+          </div>
       </div>
 
     </div>
@@ -744,10 +736,9 @@
     }
 
     function calculatePredio(totalEdif) {
-        // Si no se pasa el total, obtenerlo del DOM
+        // Si no se pasa el total, obtenerlo del DOM (parseando el string formateado)
         let valEdificacion = totalEdif;
         if (typeof valEdificacion === 'undefined') {
-             // Limpiar formato S/. y comas para obtener número limpio
              const text = document.getElementById('totalFinal').innerText.replace('S/. ', '').replace(/,/g, '');
              valEdificacion = parseFloat(text) || 0;
         }
