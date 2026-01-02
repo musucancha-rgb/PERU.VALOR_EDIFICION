@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Calculadora de Edificaciones Perú 2026</title>
+  <title>Calculadora del Valor de la Edificación 2026</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 
   <!-- Leaflet CSS -->
@@ -37,9 +37,11 @@
     /* Estilos de impresión para reporte */
     @media print {
         #map, #toggleSideBtn { display: none; }
-        #uiContainer { position: relative; width: 100%; height: auto; overflow: visible; }
-        #mainPanel { max-height: none; box-shadow: none; border: none; width: 100%; max-width: 100%; }
+        #uiContainer { position: relative; width: 100%; height: auto; overflow: visible; padding: 0; }
+        #mainPanel { max-height: none; height: auto; box-shadow: none; border: none; width: 100%; max-width: 100%; overflow: visible; }
         .no-print { display: none !important; }
+        body { background: white; overflow: visible; }
+        .custom-scroll { overflow: visible; }
     }
     
     /* Input numérico limpio */
@@ -71,7 +73,7 @@
                     </div>
                     <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">R.M. N° 172-2016-VIVIENDA</span>
                 </div>
-                <h1 class="text-lg font-bold text-slate-800 leading-tight">Calculadora de Edificación 2026</h1>
+                <h1 class="text-lg font-bold text-slate-800 leading-tight">Calculadora del Valor de la Edificación 2026</h1>
                 <p id="selectedDistrictDisplay" class="text-xs text-blue-600 font-semibold mt-1"><i class="fa-solid fa-location-dot mr-1"></i> Selecciona un distrito en el mapa</p>
             </div>
             <button onclick="resetCalculator()" class="text-xs text-red-500 hover:bg-red-50 p-1 px-2 rounded border border-red-200 transition-colors no-print">
@@ -170,25 +172,39 @@
 
       </div>
 
-      <!-- FOOTER TOTALES -->
-      <div class="p-4 bg-slate-800 text-white shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.1)] z-10">
-        <div class="flex justify-between items-center mb-1 text-xs text-slate-400">
-            <span>Subtotal Edificación:</span>
-            <span id="subtotalEdif">S/. 0.00</span>
-        </div>
-        <div class="flex justify-between items-center mb-1 text-xs text-slate-400">
-            <span>Subtotal Obras Compl.:</span>
-            <span id="subtotalObras">S/. 0.00</span>
-        </div>
-        <div class="border-t border-slate-600 my-2"></div>
-        <div class="flex justify-between items-end">
-            <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-400">Valor Total</p>
-                <p id="totalFinal" class="text-2xl font-bold leading-none text-green-400">S/. 0.00</p>
+      <!-- FOOTER TOTALES Y CRÉDITOS -->
+      <div class="bg-slate-800 text-white shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.1)] z-10">
+        <!-- Totales -->
+        <div class="p-4 pb-2">
+            <div class="flex justify-between items-center mb-1 text-xs text-slate-400">
+                <span>Subtotal Edificación:</span>
+                <span id="subtotalEdif">S/. 0.00</span>
             </div>
-            <button onclick="printReport()" class="bg-white text-slate-900 text-xs font-bold py-2 px-4 rounded hover:bg-slate-200 transition-colors no-print">
-                <i class="fa-solid fa-print mr-1"></i> Reporte
-            </button>
+            <div class="flex justify-between items-center mb-1 text-xs text-slate-400">
+                <span>Subtotal Obras Compl.:</span>
+                <span id="subtotalObras">S/. 0.00</span>
+            </div>
+            <div class="border-t border-slate-600 my-2"></div>
+            <div class="flex justify-between items-end">
+                <div>
+                    <p class="text-[10px] uppercase tracking-widest text-slate-400">Valor Total</p>
+                    <p id="totalFinal" class="text-2xl font-bold leading-none text-green-400">S/. 0.00</p>
+                </div>
+                <button onclick="printReport()" class="bg-white text-slate-900 text-xs font-bold py-2 px-4 rounded hover:bg-slate-200 transition-colors no-print">
+                    <i class="fa-solid fa-print mr-1"></i> Reporte
+                </button>
+            </div>
+        </div>
+
+        <!-- Créditos (Visibles en Print) -->
+        <div class="bg-slate-900 p-3 text-center border-t border-slate-700">
+            <p class="text-[10px] font-bold text-slate-400 mb-2">Elaborado por Lab Urban Risk</p>
+            <div class="flex justify-center gap-5">
+                <a href="https://youtube.com/@laburbanrisk?si=COqNXDTX7TAQSqDO" target="_blank" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-brands fa-youtube text-lg"></i></a>
+                <a href="https://www.facebook.com/share/1Db3ZgmTE4/?mibextid=wwXIfr" target="_blank" class="text-slate-400 hover:text-blue-500 transition-colors"><i class="fa-brands fa-facebook text-lg"></i></a>
+                <a href="https://www.instagram.com/laburbanrisk?igsh=MWNzam53enpzZng4Ng%3D%3D&utm_source=qr" target="_blank" class="text-slate-400 hover:text-pink-500 transition-colors"><i class="fa-brands fa-instagram text-lg"></i></a>
+                <a href="https://www.tiktok.com/@laburbanrisk?_r=1&_t=ZN-92idJVeblZe" target="_blank" class="text-slate-400 hover:text-white transition-colors"><i class="fa-brands fa-tiktok text-lg"></i></a>
+            </div>
         </div>
       </div>
 
@@ -530,6 +546,13 @@
             obrasSelect.innerHTML += `<option value="${obra.id}" data-val="${price}" data-name="${obra.name}" data-unit="${obra.unit}">${obra.id}. ${obra.name} - S/.${price.toFixed(2)}/${obra.unit}</option>`;
         });
 
+        // 3. Actualizar Estilo del Mapa (Highlight Masivo)
+        if(geojson) {
+            geojson.eachLayer(layer => {
+                layer.setStyle(style(layer.feature));
+            });
+        }
+
         calculate();
     }
 
@@ -689,13 +712,20 @@
     // --- 4. MAPA: ESTILOS Y SELECCIÓN ---
     let selectedLayer = null;
 
+    // Estilo Inteligente: Resalta TODA la región seleccionada
     function style(feature) {
+      const ubigeo = feature.properties.ubigeo || feature.properties.UBIGEO || "";
+      const region = detectRegion(ubigeo);
+      const selectedRegion = document.getElementById('regionSelect') ? document.getElementById('regionSelect').value : 'lima';
+      
+      const isActive = region === selectedRegion;
+
       return {
-        color: "#3b82f6",
-        weight: 1, 
+        color: isActive ? "#2563eb" : "#94a3b8", // Azul vs Slate
+        weight: isActive ? 1.5 : 0.5, 
         opacity: 1,
-        fillColor: "#60a5fa",
-        fillOpacity: 0.1
+        fillColor: isActive ? "#3b82f6" : "#cbd5e1", // Azul relleno vs Gris relleno
+        fillOpacity: isActive ? 0.4 : 0.1 // Más opacidad para la región activa
       };
     }
 
@@ -710,7 +740,9 @@
 
     function resetHighlight(e) {
       if (e.target !== selectedLayer) {
-        geojson.resetStyle(e.target);
+        // Restaurar estilo base (que ya incluye el resaltado regional)
+        const layer = e.target;
+        layer.setStyle(style(layer.feature));
       }
     }
 
@@ -746,8 +778,11 @@
     }
 
     function selectFeature(layer) {
+        // Remover selección anterior
         if (selectedLayer && selectedLayer !== layer) {
-            geojson.resetStyle(selectedLayer);
+             const prevLayer = selectedLayer;
+             selectedLayer = null; // Evita loop en resetHighlight
+             prevLayer.setStyle(style(prevLayer.feature));
         }
         
         selectedLayer = layer;
@@ -768,7 +803,7 @@
         document.getElementById('regionSelect').value = detectedRegion;
         document.getElementById('selectedDistrictDisplay').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${distName} (Región: ${detectedRegion.toUpperCase()})`;
         
-        // Trigger update
+        // Trigger update (Esto también actualizará el mapa entero para resaltar la nueva región)
         updateRegion();
         
         // Abrir panel si está cerrado (opcional, en móviles)
